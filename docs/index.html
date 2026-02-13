@@ -59,13 +59,13 @@
               <span class="dot green"></span>
               <span class="terminal-title">chaos-dock session</span>
             </div>
-            <pre><code>$ chaos-dock explore
+            <pre><code>$ chaos-dock -list
 containers: api postgres redis
 
-$ chaos-dock inject latency --target postgres --delay 500ms
-status: qdisc netem delay 500ms active on eth0
+$ chaos-dock -run-scheduled -config chaos.yaml
+status: network-latency + kill experiments running
 
-$ chaos-dock panic
+$ chaos-dock -panic -targets "postgres,api"
 status: reverted latency + restarted 1 container</code></pre>
           </div>
         </div>
@@ -81,8 +81,8 @@ status: reverted latency + restarted 1 container</code></pre>
           <p>Uses container PID + <code>nsenter</code> to run <code>tc netem</code> inside target network namespace.</p>
         </article>
         <article>
-          <h2>Panic Button Safety</h2>
-          <p>Best-effort rollback removes traffic controls and restarts impacted containers immediately.</p>
+          <h2>Scheduler + Panic Safety</h2>
+          <p>Supports recurring experiments with jitter and panic-button rollback with tracked targets.</p>
         </article>
       </section>
 
@@ -94,19 +94,27 @@ status: reverted latency + restarted 1 container</code></pre>
         <div class="feature-grid">
           <article class="card">
             <h4>Container Discovery</h4>
-            <p>Visualize active Docker workloads from the daemon and select fault targets safely.</p>
+            <p>Use <code>-list</code> to enumerate running workloads with container IDs, image names, and status.</p>
           </article>
           <article class="card">
             <h4>Latency Injection</h4>
             <p>Inject deterministic delay with Linux traffic control and remove qdisc state on command.</p>
           </article>
           <article class="card">
+            <h4>Kill Fault Injector</h4>
+            <p>Terminate a target with validated signals such as <code>SIGTERM</code> and <code>SIGKILL</code>.</p>
+          </article>
+          <article class="card">
             <h4>Experiment as Code</h4>
             <p>Define repeatable scenarios in <code>chaos.yaml</code> and schedule recurring fault experiments.</p>
           </article>
           <article class="card">
+            <h4>Run Once / Scheduled Modes</h4>
+            <p>Execute one-shot experiments for CI validation or continuous loops for reliability drills.</p>
+          </article>
+          <article class="card">
             <h4>Emergency Recovery</h4>
-            <p>Single panic action to revert all network faults and restart selected containers.</p>
+            <p>Single panic action reverts latency and restarts either explicit or tracked target containers.</p>
           </article>
         </div>
       </section>
@@ -117,10 +125,11 @@ status: reverted latency + restarted 1 container</code></pre>
           <h3>OS-level mutation, app-level validation</h3>
         </div>
         <ol class="flow-list">
-          <li>Docker SDK inspects target container and resolves host PID from <code>State.Pid</code>.</li>
-          <li>Injector enters the target namespace with <code>nsenter --target &lt;pid&gt; --net --mount</code>.</li>
-          <li>Runs <code>tc qdisc replace dev eth0 root netem delay 500ms</code> via <code>exec.CommandContext</code>.</li>
-          <li>Panic button removes qdisc and triggers restart flow for impacted containers.</li>
+          <li>Docker SDK enumerates and inspects running containers to discover IDs and <code>State.Pid</code>.</li>
+          <li>Network injector enters namespace with <code>nsenter --target &lt;pid&gt; --net --mount</code>.</li>
+          <li>Runs <code>tc qdisc replace dev eth0 root netem delay 500ms</code> using <code>exec.CommandContext</code>.</li>
+          <li>Kill injector sends validated Unix signals through Docker API (<code>SIGTERM</code>, <code>SIGKILL</code>, etc.).</li>
+          <li>Panic button removes qdisc and restarts impacted containers using registry-aware rollback.</li>
         </ol>
       </section>
 
@@ -136,11 +145,11 @@ status: reverted latency + restarted 1 container</code></pre>
           </article>
           <article class="layer layer-application">
             <h4>Application</h4>
-            <p>Experiment runner, panic-button orchestration, Bubble Tea UI model.</p>
+            <p>Experiment runner, recurring scheduler, panic-button orchestration, Bubble Tea UI model.</p>
           </article>
           <article class="layer layer-infra">
             <h4>Infrastructure</h4>
-            <p>Docker runtime adapter, YAML loader, Linux namespace + <code>tc</code> injector.</p>
+            <p>Docker runtime adapter, YAML loader, namespace <code>tc</code> injector, and signal-based kill injector.</p>
           </article>
         </div>
       </section>
@@ -161,13 +170,26 @@ status: reverted latency + restarted 1 container</code></pre>
       type: network-latency
       delay: 500ms
     schedule:
-      every: 60s</code></pre>
+      every: 60s
+      jitter: 5s
+
+  - name: kill-db
+    targetContainer: postgres
+    enabled: true
+    fault:
+      type: kill
+      signal: SIGTERM
+    schedule:
+      every: 120s</code></pre>
           </article>
           <article class="card">
             <h4>Run Commands</h4>
             <pre><code>git clone https://github.com/lekhanpro/chaos-dock.git
 cd chaos-dock
-go run ./cmd/chaos-dock</code></pre>
+go run ./cmd/chaos-dock -list
+go run ./cmd/chaos-dock -run-once -config chaos.yaml
+go run ./cmd/chaos-dock -run-scheduled -config chaos.yaml
+go run ./cmd/chaos-dock -panic -targets "postgres,api"</code></pre>
             <p class="small-note">
               Requires Linux host privileges for namespace networking and <code>tc</code> execution.
             </p>

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	domainfault "github.com/lekhanhr/chaos-dock/internal/domain/fault"
+	domainfault "github.com/lekhanpro/chaos-dock/internal/domain/fault"
 )
 
 const (

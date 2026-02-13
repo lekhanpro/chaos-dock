@@ -1,4 +1,4 @@
-module github.com/lekhanhr/chaos-dock
+module github.com/lekhanpro/chaos-dock
 
 go 1.22.0
 

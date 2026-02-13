@@ -7,10 +7,7 @@ title: Chaos-Dock
 
 Local chaos engineering for Docker workloads.
 
-- Enumerates running containers via Docker API
-- Injects network latency using Linux namespace + `tc netem`
-- Supports experiment definitions via `chaos.yaml`
-- Includes panic-button rollback flow
+- Full website content is served from `index.html`.
+- This Markdown file is retained for compatibility.
 
 See the repository README for architecture and implementation details.
-

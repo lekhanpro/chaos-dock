@@ -13,12 +13,12 @@ type Experiment struct {
 }
 
 type Fault struct {
-	Type  string `yaml:"type"`            // network-latency | kill
-	Delay string `yaml:"delay,omitempty"` // e.g. 500ms
+	Type   string `yaml:"type"`              // network-latency | kill
+	Delay  string `yaml:"delay,omitempty"`   // e.g. 500ms
+	Signal string `yaml:"signal,omitempty"`  // e.g. SIGKILL
 }
 
 type Schedule struct {
 	Every  string `yaml:"every"`            // e.g. 60s
 	Jitter string `yaml:"jitter,omitempty"` // e.g. 5s
 }
-

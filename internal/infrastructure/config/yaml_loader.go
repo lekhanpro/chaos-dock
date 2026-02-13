@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	domainconfig "github.com/lekhanhr/chaos-dock/internal/domain/config"
+	domainconfig "github.com/lekhanpro/chaos-dock/internal/domain/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -64,7 +64,9 @@ func validate(cfg domainconfig.ChaosConfig) error {
 				return fmt.Errorf("experiments[%d].fault.delay must be a valid duration: %w", i, err)
 			}
 		case "kill":
-			// No extra fields required for kill.
+			if exp.Fault.Signal != "" && !isSupportedSignal(exp.Fault.Signal) {
+				return fmt.Errorf("experiments[%d].fault.signal %q is not supported", i, exp.Fault.Signal)
+			}
 		default:
 			return fmt.Errorf("experiments[%d].fault.type %q is unsupported", i, exp.Fault.Type)
 		}
@@ -73,3 +75,19 @@ func validate(cfg domainconfig.ChaosConfig) error {
 	return nil
 }
 
+func isSupportedSignal(raw string) bool {
+	signal := strings.ToUpper(strings.TrimSpace(raw))
+	if signal == "" {
+		return true
+	}
+	if !strings.HasPrefix(signal, "SIG") {
+		signal = "SIG" + signal
+	}
+
+	switch signal {
+	case "SIGKILL", "SIGTERM", "SIGINT", "SIGQUIT", "SIGHUP", "SIGUSR1", "SIGUSR2":
+		return true
+	default:
+		return false
+	}
+}

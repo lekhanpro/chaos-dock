@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	domainfault "github.com/lekhanhr/chaos-dock/internal/domain/fault"
+	domainfault "github.com/lekhanpro/chaos-dock/internal/domain/fault"
 )
 
 type PIDResolver interface {

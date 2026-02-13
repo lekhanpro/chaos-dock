@@ -9,11 +9,21 @@ experiments:
       every: 60s
       jitter: 5s
 
+  - name: api-latency
+    targetContainer: api
+    enabled: true
+    fault:
+      type: network-latency
+      delay: 120ms
+    schedule:
+      every: 30s
+      jitter: 3s
+
   - name: kill-db
     targetContainer: postgres
-    enabled: false
+    enabled: true
     fault:
       type: kill
+      signal: SIGTERM
     schedule:
-      every: 60s
-
+      every: 120s
