@@ -1,0 +1,19 @@
+experiments:
+  - name: db-latency
+    targetContainer: postgres
+    enabled: true
+    fault:
+      type: network-latency
+      delay: 500ms
+    schedule:
+      every: 60s
+      jitter: 5s
+
+  - name: kill-db
+    targetContainer: postgres
+    enabled: false
+    fault:
+      type: kill
+    schedule:
+      every: 60s
+
