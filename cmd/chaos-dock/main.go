@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -27,8 +28,32 @@ func main() {
 
 	opts := parseFlags()
 
-	if !opts.runOnce && !opts.runScheduled && !opts.panic && !opts.list {
+	if !opts.runOnce && !opts.runScheduled && !opts.panic && !opts.list && !opts.initConfig && !opts.validateConfig {
 		runTUI(ctx)
+		return
+	}
+
+	if opts.initConfig {
+		if err := writeDefaultConfig(opts.configPath, opts.force); err != nil {
+			log.Fatalf("initialize config: %v", err)
+		}
+		log.Printf("created %s", opts.configPath)
+		return
+	}
+
+	if opts.validateConfig {
+		cfg, err := configinfra.LoadChaosConfig(opts.configPath)
+		if err != nil {
+			log.Fatalf("config validation failed: %v", err)
+		}
+		log.Printf("config validation successful: %d experiments", len(cfg.Experiments))
+		for _, exp := range cfg.Experiments {
+			status := "disabled"
+			if exp.Enabled {
+				status = "enabled"
+			}
+			log.Printf("- %s [%s] target=%s fault=%s every=%s", exp.Name, status, exp.TargetContainer, exp.Fault.Type, exp.Schedule.Every)
+		}
 		return
 	}
 
@@ -81,12 +106,15 @@ func main() {
 }
 
 type runOptions struct {
-	configPath   string
-	runOnce      bool
-	runScheduled bool
-	panic        bool
-	targets      string
-	list         bool
+	configPath     string
+	runOnce        bool
+	runScheduled   bool
+	panic          bool
+	targets        string
+	list           bool
+	initConfig     bool
+	validateConfig bool
+	force          bool
 }
 
 func parseFlags() runOptions {
@@ -98,10 +126,22 @@ func parseFlags() runOptions {
 	flag.BoolVar(&opts.panic, "panic", false, "revert network faults and restart containers")
 	flag.StringVar(&opts.targets, "targets", "", "comma-separated container IDs/names used by -panic")
 	flag.BoolVar(&opts.list, "list", false, "list running containers from the Docker daemon")
+	flag.BoolVar(&opts.initConfig, "init-config", false, "create a starter chaos config at -config path")
+	flag.BoolVar(&opts.validateConfig, "validate-config", false, "validate chaos config and print experiment summary")
+	flag.BoolVar(&opts.force, "force", false, "allow overwrite when used with -init-config")
 	flag.Parse()
 
 	if opts.runOnce && opts.runScheduled {
 		log.Fatalf("choose exactly one of -run-once or -run-scheduled")
+	}
+	if opts.initConfig && opts.validateConfig {
+		log.Fatalf("choose exactly one of -init-config or -validate-config")
+	}
+	if opts.initConfig && (opts.runOnce || opts.runScheduled || opts.panic || opts.list) {
+		log.Fatalf("-init-config cannot be combined with runtime fault commands")
+	}
+	if opts.validateConfig && (opts.runOnce || opts.runScheduled || opts.panic || opts.list) {
+		log.Fatalf("-validate-config cannot be combined with runtime fault commands")
 	}
 
 	return opts
@@ -192,3 +232,49 @@ func splitCSV(raw string) []string {
 
 	return out
 }
+
+func writeDefaultConfig(path string, force bool) error {
+	cleanPath := strings.TrimSpace(path)
+	if cleanPath == "" {
+		return fmt.Errorf("config path is required")
+	}
+
+	if !force {
+		if _, err := os.Stat(cleanPath); err == nil {
+			return fmt.Errorf("file %q already exists (use -force to overwrite)", cleanPath)
+		}
+	}
+
+	return os.WriteFile(cleanPath, []byte(defaultChaosYAML), 0o644)
+}
+
+const defaultChaosYAML = `experiments:
+  - name: db-latency
+    targetContainer: postgres
+    enabled: true
+    fault:
+      type: network-latency
+      delay: 500ms
+    schedule:
+      every: 60s
+      jitter: 5s
+
+  - name: api-latency
+    targetContainer: api
+    enabled: true
+    fault:
+      type: network-latency
+      delay: 120ms
+    schedule:
+      every: 30s
+      jitter: 3s
+
+  - name: kill-db
+    targetContainer: postgres
+    enabled: true
+    fault:
+      type: kill
+      signal: SIGTERM
+    schedule:
+      every: 120s
+`

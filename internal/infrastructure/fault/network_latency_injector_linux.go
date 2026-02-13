@@ -148,4 +148,3 @@ func isMissingQDisc(err error) bool {
 	raw := strings.ToLower(err.Error())
 	return strings.Contains(raw, "no such file") || strings.Contains(raw, "cannot find qdisc")
 }
-

@@ -68,4 +68,3 @@ func normalizeSignal(raw string) (string, error) {
 
 	return normalized, nil
 }
-

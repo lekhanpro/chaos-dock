@@ -123,4 +123,3 @@ func (r *Runner) RunOnce(ctx context.Context, cfg domainconfig.ChaosConfig) []Ex
 	}
 	return results
 }
-

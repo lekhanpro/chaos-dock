@@ -32,4 +32,3 @@ func (n *NetworkLatencyInjector) RevertNetworkLatency(ctx context.Context, conta
 	_ = containerID
 	return fmt.Errorf("%w", domainfault.ErrUnsupportedPlatform)
 }
-

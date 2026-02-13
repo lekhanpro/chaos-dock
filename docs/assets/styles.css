@@ -360,6 +360,10 @@ body {
   line-height: 1.5;
 }
 
+.quickstart-grid pre + pre {
+  margin-top: 0.7rem;
+}
+
 .small-note {
   margin: 0.7rem 0 0;
   color: var(--ink-soft);

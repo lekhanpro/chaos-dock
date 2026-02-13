@@ -62,6 +62,12 @@
             <pre><code>$ chaos-dock -list
 containers: api postgres redis
 
+$ chaos-dock -init-config -config chaos.yaml
+status: starter config written
+
+$ chaos-dock -validate-config -config chaos.yaml
+status: config validation successful
+
 $ chaos-dock -run-scheduled -config chaos.yaml
 status: network-latency + kill experiments running
 
@@ -92,6 +98,10 @@ status: reverted latency + restarted 1 container</code></pre>
           <h3>Fault injection with guardrails</h3>
         </div>
         <div class="feature-grid">
+          <article class="card">
+            <h4>Config Bootstrap + Validation</h4>
+            <p>Create starter experiment files and validate them before execution.</p>
+          </article>
           <article class="card">
             <h4>Container Discovery</h4>
             <p>Use <code>-list</code> to enumerate running workloads with container IDs, image names, and status.</p>
@@ -186,10 +196,16 @@ status: reverted latency + restarted 1 container</code></pre>
             <h4>Run Commands</h4>
             <pre><code>git clone https://github.com/lekhanpro/chaos-dock.git
 cd chaos-dock
+go run ./cmd/chaos-dock -init-config -config chaos.yaml
+go run ./cmd/chaos-dock -validate-config -config chaos.yaml
 go run ./cmd/chaos-dock -list
 go run ./cmd/chaos-dock -run-once -config chaos.yaml
 go run ./cmd/chaos-dock -run-scheduled -config chaos.yaml
 go run ./cmd/chaos-dock -panic -targets "postgres,api"</code></pre>
+            <pre><code># quick script wrapper
+./scripts/run-local.sh init chaos.yaml
+./scripts/run-local.sh validate chaos.yaml
+./scripts/run-local.sh run-once chaos.yaml</code></pre>
             <p class="small-note">
               Requires Linux host privileges for namespace networking and <code>tc</code> execution.
             </p>

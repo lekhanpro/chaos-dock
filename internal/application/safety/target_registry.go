@@ -45,4 +45,3 @@ func (r *TargetRegistry) Reset() {
 	defer r.mu.Unlock()
 	r.targets = make(map[string]struct{})
 }
-

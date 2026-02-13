@@ -115,4 +115,3 @@ func nextInterval(every time.Duration, jitter time.Duration) time.Duration {
 
 	return every + time.Duration(rand.Int63n(int64(jitter)+1))
 }
-

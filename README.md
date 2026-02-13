@@ -20,6 +20,7 @@ Instead of modifying application code, Chaos-Dock injects failures at the contai
 
 ## Current Features
 
+- Zero-friction config bootstrap (`-init-config`) and config validation (`-validate-config`).
 - Container discovery from Docker daemon (`-list` mode).
 - Latency injector (`network-latency`) using `nsenter` + `tc qdisc netem`.
 - Kill injector (`kill`) with signal validation.
@@ -28,6 +29,7 @@ Instead of modifying application code, Chaos-Dock injects failures at the contai
 - Continuous schedule execution with jitter (`-run-scheduled`).
 - Panic rollback (`-panic`) with target registry support.
 - Bubble Tea TUI entrypoint.
+- Cross-platform helper scripts (`scripts/run-local.ps1`, `scripts/run-local.sh`).
 - GitHub Actions CI (`golangci-lint`, `go test`) + GitHub Pages deployment.
 
 ## Repository Layout
@@ -151,6 +153,20 @@ Supported fields:
 
 ## CLI Usage
 
+### Initialize Starter Config
+
+```bash
+go run ./cmd/chaos-dock -init-config -config chaos.yaml
+```
+
+Use `-force` to overwrite an existing file.
+
+### Validate Config
+
+```bash
+go run ./cmd/chaos-dock -validate-config -config chaos.yaml
+```
+
 ### TUI Mode
 
 ```bash
@@ -183,6 +199,26 @@ go run ./cmd/chaos-dock -panic -targets "postgres,api"
 
 If `-targets` is omitted, panic rollback can use tracked targets captured during runtime.
 
+### Helper Scripts (Recommended for quick local usage)
+
+PowerShell:
+
+```powershell
+./scripts/run-local.ps1 -Action init -Config chaos.yaml
+./scripts/run-local.ps1 -Action validate -Config chaos.yaml
+./scripts/run-local.ps1 -Action list
+./scripts/run-local.ps1 -Action run-once -Config chaos.yaml
+```
+
+Bash:
+
+```bash
+./scripts/run-local.sh init chaos.yaml
+./scripts/run-local.sh validate chaos.yaml
+./scripts/run-local.sh list
+./scripts/run-local.sh run-once chaos.yaml
+```
+
 ## Safety Model
 
 - Explicit timeout controls for host command execution (`exec.CommandContext`).
@@ -199,10 +235,16 @@ If `-targets` is omitted, panic rollback can use tracked targets captured during
 
 Prerequisites:
 
-- Go 1.22+
+- Go 1.24+ (project `go.mod` target)
 - Docker Engine running locally
 - Linux host for network namespace + `tc` features
 - Privileges to run namespace traffic control commands
+
+Install Go (Windows):
+
+1. Download the latest Windows AMD64 archive from `https://go.dev/dl/`.
+2. Extract to a stable path (example: `C:\Users\<you>\tools\go`).
+3. Add `...\go\bin` to user `PATH`.
 
 Clone and run:
 
@@ -255,5 +297,4 @@ Near-term:
 
 ## Version
 
-Current project version: `0.2.0` (`pkg/chaosdock/version.go`)
-
+Current project version: `0.3.0` (`pkg/chaosdock/version.go`)
