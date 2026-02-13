@@ -16,7 +16,10 @@ func NewModel(ctx context.Context) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	return func() tea.Msg {
+		<-m.ctx.Done()
+		return tea.QuitMsg{}
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -38,4 +41,3 @@ func (m Model) View() string {
 			"- Press q to quit.\n",
 	)
 }
-
